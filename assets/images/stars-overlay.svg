@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375 370" width="375" height="370">
+  <!-- Transparent background — layer this on top of sky bg -->
+
+  <!-- Twinkle large -->
+  <circle cx="34"  cy="62"  r="1.5" fill="white" opacity="0.85"/>
+  <circle cx="336" cy="70"  r="1.4" fill="white" opacity="0.8"/>
+  <circle cx="195" cy="44"  r="1.3" fill="white" opacity="0.75"/>
+  <circle cx="118" cy="32"  r="1.2" fill="white" opacity="0.7"/>
+  <circle cx="258" cy="42"  r="1.2" fill="white" opacity="0.65"/>
+
+  <!-- Small scattered -->
+  <circle cx="22"  cy="58"  r="1.0" fill="white" opacity="0.6"/>
+  <circle cx="45"  cy="38"  r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="68"  cy="72"  r="0.9" fill="white" opacity="0.55"/>
+  <circle cx="88"  cy="50"  r="0.8" fill="white" opacity="0.5"/>
+  <circle cx="38"  cy="95"  r="0.7" fill="white" opacity="0.4"/>
+  <circle cx="14"  cy="130" r="0.8" fill="white" opacity="0.42"/>
+  <circle cx="55"  cy="148" r="0.6" fill="white" opacity="0.35"/>
+  <circle cx="76"  cy="118" r="0.9" fill="white" opacity="0.48"/>
+  <circle cx="102" cy="88"  r="0.7" fill="white" opacity="0.38"/>
+  <circle cx="28"  cy="175" r="0.7" fill="white" opacity="0.28"/>
+  <circle cx="82"  cy="195" r="0.6" fill="white" opacity="0.25"/>
+
+  <circle cx="348" cy="52"  r="1.1" fill="white" opacity="0.62"/>
+  <circle cx="322" cy="38"  r="0.9" fill="white" opacity="0.5"/>
+  <circle cx="360" cy="88"  r="0.8" fill="white" opacity="0.44"/>
+  <circle cx="298" cy="68"  r="0.9" fill="white" opacity="0.52"/>
+  <circle cx="340" cy="115" r="0.7" fill="white" opacity="0.38"/>
+  <circle cx="312" cy="145" r="0.7" fill="white" opacity="0.36"/>
+  <circle cx="368" cy="148" r="0.6" fill="white" opacity="0.3"/>
+  <circle cx="280" cy="95"  r="0.7" fill="white" opacity="0.36"/>
+  <circle cx="265" cy="128" r="0.8" fill="white" opacity="0.4"/>
+  <circle cx="350" cy="188" r="0.6" fill="white" opacity="0.26"/>
+  <circle cx="290" cy="200" r="0.7" fill="white" opacity="0.28"/>
+
+  <circle cx="152" cy="28"  r="0.8" fill="white" opacity="0.42"/>
+  <circle cx="187" cy="22"  r="0.9" fill="white" opacity="0.48"/>
+  <circle cx="222" cy="35"  r="0.7" fill="white" opacity="0.38"/>
+  <circle cx="135" cy="55"  r="0.6" fill="white" opacity="0.32"/>
+  <circle cx="240" cy="58"  r="0.8" fill="white" opacity="0.38"/>
+
+  <!-- Lower fade -->
+  <circle cx="40"  cy="230" r="0.6" fill="white" opacity="0.18"/>
+  <circle cx="335" cy="240" r="0.6" fill="white" opacity="0.18"/>
+  <circle cx="110" cy="268" r="0.5" fill="white" opacity="0.12"/>
+  <circle cx="265" cy="260" r="0.5" fill="white" opacity="0.12"/>
+</svg>

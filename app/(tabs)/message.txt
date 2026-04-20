@@ -166,7 +166,7 @@ function TransactionRow({ transaction }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "#05060D",
     paddingHorizontal: 16,
     paddingTop: 48,
   },

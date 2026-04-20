@@ -1,21 +1,110 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  Easing,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { supabase } from "../lib/supabase";
 
+// ── Twinkling star ────────────────────────────────────────────────────────────
+function Star({ x, y, size, delay }) {
+  const opacity = useRef(new Animated.Value(0.15)).current;
+  useEffect(() => {
+    const loop = () =>
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.9, duration: 1000 + Math.random() * 800, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.15, duration: 1000 + Math.random() * 800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]).start(loop);
+    loop();
+  }, []);
+  return <Animated.View style={{ position: "absolute", left: x, top: y, width: size, height: size, borderRadius: size / 2, backgroundColor: "#fff", opacity }} />;
+}
+
+function buildStars(w) {
+  return [
+    { x: w * 0.01,  y: 55,  size: 2.6, delay: 0   },
+    { x: w * 0.16,  y: 30,  size: 1.8, delay: 300 },
+    { x: w * 0.29,  y: 65,  size: 2,   delay: 600 },
+    { x: w * 0.41,  y: 22,  size: 1.6, delay: 150 },
+    { x: w * 0.50,  y: 40,  size: 2.2, delay: 900 },
+    { x: w * 0.61,  y: 18,  size: 1.6, delay: 450 },
+    { x: w * 0.73,  y: 55,  size: 2,   delay: 750 },
+    { x: w * 0.83,  y: 32,  size: 1.8, delay: 200 },
+    { x: w * 0.93,  y: 65,  size: 2.6, delay: 550 },
+    { x: w * 0.11,  y: 90,  size: 1.4, delay: 800 },
+    { x: w * 0.77,  y: 88,  size: 1.4, delay: 100 },
+    { x: w * 0.23,  y: 110, size: 1.2, delay: 650 },
+    { x: w * 0.65,  y: 105, size: 1.2, delay: 350 },
+    { x: w * 0.35,  y: 140, size: 1.0, delay: 500 },
+    { x: w * 0.88,  y: 125, size: 1.0, delay: 720 },
+  ];
+}
+
+// ── Moon logo from asset ──────────────────────────────────────────────────────
+function CrescentMoon() {
+  return (
+    <Image
+      source={require("../assets/images/moon.png")}
+      style={{ width: 160, height: 160 }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// ── Signup screen ─────────────────────────────────────────────────────────────
 export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { width } = useWindowDimensions();
+  const stars = buildStars(width);
+
+  const [email, setEmail]                     = useState("");
+  const [password, setPassword]               = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]                 = useState(false);
+  const [focused, setFocused]                 = useState(null);
   const router = useRouter();
+
+  const moonY   = useRef(new Animated.Value(-100)).current;
+  const moonOp  = useRef(new Animated.Value(0)).current;
+  const moonFlt = useRef(new Animated.Value(0)).current;
+  const titleY  = useRef(new Animated.Value(24)).current;
+  const titleOp = useRef(new Animated.Value(0)).current;
+  const formY   = useRef(new Animated.Value(50)).current;
+  const formOp  = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(160, [
+      Animated.parallel([
+        Animated.timing(moonY,  { toValue: 0, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(moonOp, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(titleY,  { toValue: 0, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(titleOp, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(formY,  { toValue: 0, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(formOp, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ]),
+    ]).start();
+
+    const float = () =>
+      Animated.sequence([
+        Animated.timing(moonFlt, { toValue: -10, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(moonFlt, { toValue: 0,   duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ]).start(float);
+    const t = setTimeout(float, 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   async function handleSignup() {
     if (password !== confirmPassword) {
@@ -28,89 +117,226 @@ export default function Signup() {
     if (error) Alert.alert("Error", error.message);
     else {
       Alert.alert("Success", "Account created! You can now sign in.");
-      router.replace("/login");
+      router.replace("/maindash");
     }
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Start managing your finances</Text>
+    <KeyboardAvoidingView
+      style={s.root}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      {/* Full-width sky background */}
+      <View style={[s.skyBg, { width }]} />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
+      {/* Stars */}
+      {stars.map((st, i) => <Star key={i} {...st} />)}
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? "Creating account..." : "Sign Up"}
-        </Text>
-      </TouchableOpacity>
+      {/* Halo */}
+      <View style={s.halo} />
 
-      <TouchableOpacity onPress={() => router.push("/login")}>
-        <Text style={styles.link}>Already have an account? Sign In</Text>
-      </TouchableOpacity>
-    </View>
+      {/* Moon */}
+      <Animated.View style={[s.moonWrap, { opacity: moonOp, transform: [{ translateY: moonY }, { translateY: moonFlt }] }]}>
+        <CrescentMoon />
+      </Animated.View>
+
+      {/* Title */}
+      <Animated.View style={[s.titleBlock, { opacity: titleOp, transform: [{ translateY: titleY }] }]}>
+        <Text style={s.appName}>Lumen</Text>
+        <Text style={s.appSub}>Personal Finance</Text>
+      </Animated.View>
+
+      {/* Form panel — left/right/bottom anchored so it fills the screen width exactly */}
+      <Animated.View style={[s.panel, { opacity: formOp, transform: [{ translateY: formY }] }]}>
+
+        <Text style={s.heading}>Create Account</Text>
+        <Text style={s.subheading}>Join Lumen today</Text>
+
+        {/* Email */}
+        <View style={[s.inputBox, focused === "email" && s.inputBoxFocused]}>
+          <Text style={s.fieldLabel}>EMAIL</Text>
+          <TextInput
+            style={s.input}
+            placeholder="you@example.com"
+            placeholderTextColor="#4a4570"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            onFocus={() => setFocused("email")}
+            onBlur={() => setFocused(null)}
+          />
+        </View>
+
+        {/* Password */}
+        <View style={[s.inputBox, focused === "pw" && s.inputBoxFocused]}>
+          <Text style={s.fieldLabel}>PASSWORD</Text>
+          <TextInput
+            style={s.input}
+            placeholder="••••••••"
+            placeholderTextColor="#4a4570"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            onFocus={() => setFocused("pw")}
+            onBlur={() => setFocused(null)}
+          />
+        </View>
+
+        {/* Confirm password */}
+        <View style={[s.inputBox, focused === "cpw" && s.inputBoxFocused]}>
+          <Text style={s.fieldLabel}>CONFIRM PASSWORD</Text>
+          <TextInput
+            style={s.input}
+            placeholder="••••••••"
+            placeholderTextColor="#4a4570"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            onFocus={() => setFocused("cpw")}
+            onBlur={() => setFocused(null)}
+          />
+        </View>
+
+        {/* Button */}
+        <TouchableOpacity
+          style={[s.btn, loading && s.btnDisabled]}
+          onPress={handleSignup}
+          disabled={loading}
+          activeOpacity={0.82}
+        >
+          <Text style={s.btnText}>{loading ? "Creating account…" : "Sign Up"}</Text>
+        </TouchableOpacity>
+
+        {/* Link */}
+        <TouchableOpacity onPress={() => router.push("/login")} style={s.linkRow}>
+          <Text style={s.linkGray}>Already have an account? </Text>
+          <Text style={s.linkPurple}>Sign In</Text>
+        </TouchableOpacity>
+
+      </Animated.View>
+    </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const s = StyleSheet.create({
+  root: {
     flex: 1,
-    justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#fff",
+    backgroundColor: "#07070f",
+    alignSelf: "stretch",
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 4,
+  skyBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    height: 340,
+    backgroundColor: "#0f0e28",
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-    color: "#888",
-    marginBottom: 40,
+  halo: {
+    position: "absolute",
+    top: 20,
+    alignSelf: "center",
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: "#6C63FF",
+    opacity: 0.08,
+  },
+  moonWrap: {
+    position: "absolute",
+    top: 55,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  titleBlock: {
+    position: "absolute",
+    top: 212,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  appName: {
+    fontSize: 40,
+    fontWeight: "800",
+    color: "#dcd6ff",
+    letterSpacing: 4,
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+  },
+  appSub: {
+    fontSize: 11,
+    color: "#7b74b8",
+    letterSpacing: 3.5,
+    textTransform: "uppercase",
+    marginTop: 5,
+  },
+  panel: {
+    position: "absolute",
+    top: 325,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#07070f",
+    paddingHorizontal: 24,
+    paddingTop: 20,
+  },
+  heading: { fontSize: 22, fontWeight: "700", color: "#dcd6ff", marginBottom: 3 },
+  subheading: { fontSize: 13, color: "#5c567a", marginBottom: 24 },
+  inputBox: {
+    backgroundColor: "#0e0c22",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#1e1b3a",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 10,
+    marginBottom: 12,
+    // stretch to fill panel width
+    alignSelf: "stretch",
+  },
+  inputBoxFocused: {
+    borderColor: "#6C63FF",
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  fieldLabel: {
+    fontSize: 9,
+    fontWeight: "700",
+    color: "#6C63FF",
+    letterSpacing: 1.5,
+    marginBottom: 5,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    color: "#dcd6ff",
     fontSize: 16,
+    padding: 0,
+    width: "100%",
   },
-  button: {
+  btn: {
     backgroundColor: "#6C63FF",
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: "center",
-    marginBottom: 16,
+    // stretch to fill panel width
+    alignSelf: "stretch",
+    marginTop: 4,
+    marginBottom: 18,
+    shadowColor: "#6C63FF",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  link: { textAlign: "center", color: "#6C63FF", fontSize: 14 },
+  btnDisabled: { backgroundColor: "#3d3880", shadowOpacity: 0.2 },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.6 },
+  linkRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignSelf: "stretch",
+  },
+  linkGray: { color: "#5c567a", fontSize: 14 },
+  linkPurple: { color: "#9d97e8", fontSize: 14, fontWeight: "600" },
 });

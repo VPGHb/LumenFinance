@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375 72" width="375" height="72" preserveAspectRatio="none">
+  <!-- Wave shape: fills dark color below, transparent above so sky shows through -->
+  <path d="M0,10 C80,70 160,80 230,45 C290,18 340,55 375,28 L375,72 L0,72 Z" fill="#07070f"/>
+</svg>

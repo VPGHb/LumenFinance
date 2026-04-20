@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1a1640"/>
+      <stop offset="100%" stop-color="#07070f"/>
+    </radialGradient>
+    <radialGradient id="moonGrad" cx="38%" cy="38%" r="60%">
+      <stop offset="0%" stop-color="#dcd6ff"/>
+      <stop offset="100%" stop-color="#a89fe8"/>
+    </radialGradient>
+    <radialGradient id="glowR" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6C63FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#6C63FF" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="iconClip">
+      <rect width="1024" height="1024" rx="230"/>
+    </clipPath>
+    <clipPath id="moonClipIcon">
+      <circle cx="512" cy="430" r="240"/>
+    </clipPath>
+  </defs>
+
+  <!-- App icon rounded rect background -->
+  <rect width="1024" height="1024" rx="230" fill="url(#bgGrad)"/>
+
+  <!-- Stars -->
+  <circle cx="120" cy="160" r="6"  fill="white" opacity="0.6"/>
+  <circle cx="200" cy="100" r="4"  fill="white" opacity="0.45"/>
+  <circle cx="310" cy="145" r="5"  fill="white" opacity="0.5"/>
+  <circle cx="88"  cy="290" r="4"  fill="white" opacity="0.4"/>
+  <circle cx="900" cy="140" r="6"  fill="white" opacity="0.6"/>
+  <circle cx="830" cy="90"  r="4"  fill="white" opacity="0.45"/>
+  <circle cx="940" cy="260" r="4"  fill="white" opacity="0.4"/>
+  <circle cx="720" cy="120" r="5"  fill="white" opacity="0.5"/>
+  <circle cx="510" cy="80"  r="5"  fill="white" opacity="0.55"/>
+  <circle cx="160" cy="380" r="3"  fill="white" opacity="0.3"/>
+  <circle cx="870" cy="360" r="3"  fill="white" opacity="0.3"/>
+
+  <!-- Moon glow -->
+  <circle cx="512" cy="430" r="380" fill="url(#glowR)"/>
+  <circle cx="512" cy="430" r="300" fill="url(#glowR)"/>
+
+  <!-- Moon body -->
+  <circle cx="512" cy="430" r="240" fill="url(#moonGrad)"/>
+
+  <!-- Crescent shadow -->
+  <circle cx="612" cy="400" r="220" fill="#07070f" clip-path="url(#moonClipIcon)"/>
+
+  <!-- Craters -->
+  <circle cx="340" cy="360" r="36" fill="rgba(80,70,160,0.2)"/>
+  <circle cx="340" cy="360" r="22" fill="rgba(80,70,160,0.13)"/>
+  <circle cx="390" cy="470" r="22" fill="rgba(80,70,160,0.18)"/>
+  <circle cx="390" cy="470" r="13" fill="rgba(80,70,160,0.1)"/>
+  <circle cx="430" cy="370" r="26" fill="rgba(80,70,160,0.15)"/>
+  <circle cx="430" cy="370" r="15" fill="rgba(80,70,160,0.08)"/>
+
+  <!-- Moon highlight -->
+  <ellipse cx="370" cy="320" rx="55" ry="30" fill="rgba(255,255,255,0.13)" transform="rotate(-25 370 320)"/>
+
+  <!-- Finance chart line on lower section -->
+  <polyline
+    points="160,800 260,740 360,760 460,680 560,630 660,580 760,540 864,490"
+    fill="none"
+    stroke="#6C63FF"
+    stroke-width="18"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.9"
+  />
+  <!-- Chart fill area -->
+  <polygon
+    points="160,800 260,740 360,760 460,680 560,630 660,580 760,540 864,490 864,900 160,900"
+    fill="#6C63FF"
+    opacity="0.1"
+  />
+  <!-- Chart dots -->
+  <circle cx="260" cy="740" r="12" fill="#6C63FF" opacity="0.9"/>
+  <circle cx="460" cy="680" r="12" fill="#6C63FF" opacity="0.9"/>
+  <circle cx="660" cy="580" r="12" fill="#6C63FF" opacity="0.9"/>
+  <circle cx="864" cy="490" r="16" fill="#8B84FF"/>
+  <circle cx="864" cy="490" r="8"  fill="white" opacity="0.9"/>
+</svg>
