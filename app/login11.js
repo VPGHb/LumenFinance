@@ -7,7 +7,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,7 +16,6 @@ import {
 } from "react-native";
 import { supabase } from "../lib/supabase";
 
-// ── Twinkling star ────────────────────────────────────────────────────────────
 function Star({ x, y, size, delay }) {
   const opacity = useRef(new Animated.Value(0.15)).current;
   useEffect(() => {
@@ -54,7 +52,6 @@ function Star({ x, y, size, delay }) {
   );
 }
 
-// Stars spread as percentages of screen width so they always fill edge-to-edge
 function buildStars(w) {
   return [
     { x: w * 0.01, y: 55, size: 2.6, delay: 0 },
@@ -75,7 +72,6 @@ function buildStars(w) {
   ];
 }
 
-// ── Moon logo from asset ──────────────────────────────────────────────────────
 function CrescentMoon() {
   return (
     <Image
@@ -86,7 +82,6 @@ function CrescentMoon() {
   );
 }
 
-// ── Login screen ──────────────────────────────────────────────────────────────
 export default function Login() {
   const { width } = useWindowDimensions();
   const stars = buildStars(width);
@@ -108,65 +103,29 @@ export default function Login() {
   useEffect(() => {
     Animated.stagger(160, [
       Animated.parallel([
-        Animated.timing(moonY, {
-          toValue: 0,
-          duration: 900,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(moonOp, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
+        Animated.timing(moonY, { toValue: 0, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(moonOp, { toValue: 1, duration: 800, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(titleY, {
-          toValue: 0,
-          duration: 700,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(titleOp, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
+        Animated.timing(titleY, { toValue: 0, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(titleOp, { toValue: 1, duration: 700, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(formY, {
-          toValue: 0,
-          duration: 700,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(formOp, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
+        Animated.timing(formY, { toValue: 0, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(formOp, { toValue: 1, duration: 700, useNativeDriver: true }),
       ]),
     ]).start();
 
     const float = () =>
       Animated.sequence([
-        Animated.timing(moonFlt, {
-          toValue: -10,
-          duration: 3200,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(moonFlt, {
-          toValue: 0,
-          duration: 3200,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
+        Animated.timing(moonFlt, { toValue: -10, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(moonFlt, { toValue: 0, duration: 3200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ]).start(float);
     const t = setTimeout(float, 1000);
     return () => clearTimeout(t);
   }, []);
 
+  // ── UPDATED handleLogin — checks role and routes accordingly ──
   async function handleLogin() {
     if (!email || !password) {
       Alert.alert("Error", "Please enter your email and password.");
@@ -176,25 +135,42 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // Step 1: Sign in
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        Alert.alert("Error", error.message);
+      if (authError) {
+        Alert.alert("Error", authError.message);
+        setLoading(false);
         return;
       }
 
-      const { data: profile } = await supabase
+      // Step 2: Check role in UserInfo
+      const { data: profile, error: profileError } = await supabase
         .from("UserInfo")
         .select("role")
-        .eq("user_id", data.user.id)
+        .eq("user_id", authData.user.id)
         .single();
 
-      router.replace(profile?.role === "admin" ? "/admin" : "/(tabs)/home");
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        // If profile fetch fails, default to normal user
+        router.replace("/(tabs)/home");
+        return;
+      }
+
+      // Step 3: Route based on role
+      if (profile?.role === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace("/(tabs)/home");
+      }
+
     } catch (err) {
-      Alert.alert("Error", err.message || "Something went wrong.");
+      console.error("Login error:", err);
+      Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -205,53 +181,20 @@ export default function Login() {
       style={s.root}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView
-        contentContainerStyle={s.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-      {/* Full-width dark sky gradient via nested Views */}
       <View style={[s.skyBg, { width }]} />
-
-      {/* Stars — always edge-to-edge */}
-      {stars.map((st, i) => (
-        <Star key={i} {...st} />
-      ))}
-
-      {/* Ambient purple halo */}
+      {stars.map((st, i) => <Star key={i} {...st} />)}
       <View style={s.halo} />
 
-      {/* Moon */}
-      <Animated.View
-        style={[
-          s.moonWrap,
-          {
-            opacity: moonOp,
-            transform: [{ translateY: moonY }, { translateY: moonFlt }],
-          },
-        ]}
-      >
+      <Animated.View style={[s.moonWrap, { opacity: moonOp, transform: [{ translateY: moonY }, { translateY: moonFlt }] }]}>
         <CrescentMoon />
       </Animated.View>
 
-      {/* Title */}
-      <Animated.View
-        style={[
-          s.titleBlock,
-          { opacity: titleOp, transform: [{ translateY: titleY }] },
-        ]}
-      >
+      <Animated.View style={[s.titleBlock, { opacity: titleOp, transform: [{ translateY: titleY }] }]}>
         <Text style={s.appName}>LUMEN</Text>
         <Text style={s.appSub}>Your Finances, Illuminated</Text>
       </Animated.View>
 
-      {/* Form panel */}
-      <Animated.View
-        style={[
-          s.panel,
-          { opacity: formOp, transform: [{ translateY: formY }] },
-        ]}
-      >
+      <Animated.View style={[s.panel, { opacity: formOp, transform: [{ translateY: formY }] }]}>
         <Text style={s.heading}>Welcome back</Text>
         <Text style={s.subheading}>Sign in to continue</Text>
 
@@ -293,146 +236,34 @@ export default function Login() {
           <Text style={s.btnText}>{loading ? "Signing in…" : "Sign In"}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push("/signup")}
-          style={s.linkRow}
-        >
-          <Text style={s.linkGray}>Don&apos;t have an account? </Text>
+        <TouchableOpacity onPress={() => router.push("/signup")} style={s.linkRow}>
+          <Text style={s.linkGray}>Don't have an account? </Text>
           <Text style={s.linkPurple}>Sign Up</Text>
         </TouchableOpacity>
       </Animated.View>
-      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#07070f",
-    // ensures the root fills the full device width on all screens
-    alignSelf: "stretch",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 120,
-  },
-  // full-bleed sky: radial-ish dark purple at top fading to near-black
-  skyBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    height: 340,
-    backgroundColor: "#0f0e28",
-  },
-  halo: {
-    position: "absolute",
-    top: 20,
-    alignSelf: "center",
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: "#6C63FF",
-    opacity: 0.08,
-  },
-  moonWrap: {
-    position: "absolute",
-    top: 55,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  titleBlock: {
-    position: "absolute",
-    top: 212,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  appName: {
-    fontSize: 40,
-    fontWeight: "800",
-    color: "#dcd6ff",
-    letterSpacing: 4,
-    fontFamily: "Arial",
-  },
-  appSub: {
-    fontSize: 10,
-    color: "#7b74b8",
-    letterSpacing: 3.5,
-    marginTop: 5,
-  },
-  panel: {
-    position: "absolute",
-    top: 325,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#07070f",
-    paddingHorizontal: 24,
-    paddingTop: 20,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#dcd6ff",
-    marginBottom: 3,
-  },
+  root: { flex: 1, backgroundColor: "#07070f", alignSelf: "stretch" },
+  skyBg: { position: "absolute", top: 0, left: 0, height: 340, backgroundColor: "#0f0e28" },
+  halo: { position: "absolute", top: 20, alignSelf: "center", width: 240, height: 240, borderRadius: 120, backgroundColor: "#6C63FF", opacity: 0.08 },
+  moonWrap: { position: "absolute", top: 55, left: 0, right: 0, alignItems: "center" },
+  titleBlock: { position: "absolute", top: 212, left: 0, right: 0, alignItems: "center" },
+  appName: { fontSize: 40, fontWeight: "800", color: "#dcd6ff", letterSpacing: 4, fontFamily: "Arial" },
+  appSub: { fontSize: 10, color: "#7b74b8", letterSpacing: 3.5, marginTop: 5 },
+  panel: { position: "absolute", top: 325, bottom: 0, left: 0, right: 0, backgroundColor: "#07070f", paddingHorizontal: 24, paddingTop: 20 },
+  heading: { fontSize: 22, fontWeight: "700", color: "#dcd6ff", marginBottom: 3 },
   subheading: { fontSize: 13, color: "#5c567a", marginBottom: 24 },
-  inputBox: {
-    backgroundColor: "#0e0c22",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#1e1b3a",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-    marginBottom: 14,
-    // stretch to full panel width
-    alignSelf: "stretch",
-  },
-  inputBoxFocused: {
-    borderColor: "#6C63FF",
-    shadowColor: "#6C63FF",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  fieldLabel: {
-    fontSize: 9,
-    fontWeight: "700",
-    color: "#6C63FF",
-    letterSpacing: 1.5,
-    marginBottom: 5,
-  },
+  inputBox: { backgroundColor: "#0e0c22", borderRadius: 14, borderWidth: 1, borderColor: "#1e1b3a", paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, marginBottom: 14, alignSelf: "stretch" },
+  inputBoxFocused: { borderColor: "#6C63FF", shadowColor: "#6C63FF", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8 },
+  fieldLabel: { fontSize: 9, fontWeight: "700", color: "#6C63FF", letterSpacing: 1.5, marginBottom: 5 },
   input: { color: "#dcd6ff", fontSize: 16, padding: 0, width: "100%" },
-  btn: {
-    backgroundColor: "#544cbf",
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-    alignSelf: "stretch",
-    marginTop: 6,
-    marginBottom: 18,
-    shadowColor: "#6C63FF",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
-  },
+  btn: { backgroundColor: "#544cbf", borderRadius: 14, paddingVertical: 16, alignItems: "center", alignSelf: "stretch", marginTop: 6, marginBottom: 18, shadowColor: "#6C63FF", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10 },
   btnDisabled: { backgroundColor: "#3d3880", shadowOpacity: 0.2 },
-  btnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-  },
-  linkRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignSelf: "stretch",
-  },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.6 },
+  linkRow: { flexDirection: "row", justifyContent: "center", alignSelf: "stretch" },
   linkGray: { color: "#5c567a", fontSize: 14 },
   linkPurple: { color: "#9d97e8", fontSize: 14, fontWeight: "600" },
 });

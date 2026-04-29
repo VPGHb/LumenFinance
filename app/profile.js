@@ -4,9 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Alert,
+  Modal,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -24,6 +30,12 @@ export default function Profile() {
 
   //grabbing email
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [aiInsightsEnabled, setAiInsightsEnabled] = useState(true);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [phoneInput, setPhoneInput] = useState("");
+  const [savingInfo, setSavingInfo] = useState(false);
 
   useEffect(() => {
     async function fetchUserName() {
@@ -40,10 +52,18 @@ export default function Profile() {
 
       setEmail(user.email || "");
 
+      const { data: accountData } = await supabase
+        .from("accounts")
+        .select("ai_insights_enabled")
+        .eq("user_id", user.id)
+        .single();
+
+      setAiInsightsEnabled(accountData?.ai_insights_enabled !== false);
+
       // Step 2: use that auth user id to look up this user's row in UserInfo
       const { data, error } = await supabase
         .from("UserInfo")
-        .select("full_name")
+        .select("full_name, phone_num")
         .eq("user_id", user.id)
         .single();
 
@@ -54,6 +74,7 @@ export default function Profile() {
 
       // Step 3: save the full name into React state
       setFullName(data.full_name);
+      setPhone(data.phone_num ? String(data.phone_num) : "");
 
       // Step 4: turn the full name into initials
       const nameParts = data.full_name.trim().split(" ");
@@ -73,6 +94,71 @@ export default function Profile() {
   async function handleLogout() {
     await supabase.auth.signOut();
     router.replace("/login");
+  }
+
+  function openInfoModal() {
+    setNameInput(fullName);
+    setPhoneInput(phone);
+    setInfoModalVisible(true);
+  }
+
+  async function savePersonalInfo() {
+    if (!nameInput.trim()) {
+      Alert.alert("Missing info", "Name is required.");
+      return;
+    }
+
+    setSavingInfo(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const phoneDigits = phoneInput.replace(/\D/g, "");
+    const { error } = await supabase
+      .from("UserInfo")
+      .update({
+        full_name: nameInput.trim(),
+        phone_num: phoneDigits ? parseInt(phoneDigits, 10) : null,
+      })
+      .eq("user_id", user.id);
+
+    setSavingInfo(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
+    }
+
+    setFullName(nameInput.trim());
+    setPhone(phoneDigits);
+    setInitials(
+      nameInput
+        .trim()
+        .split(" ")
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase())
+        .join(""),
+    );
+    setInfoModalVisible(false);
+  }
+
+  async function toggleAiInsights() {
+    const nextValue = !aiInsightsEnabled;
+    setAiInsightsEnabled(nextValue);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { error } = await supabase
+        .from("accounts")
+        .update({ ai_insights_enabled: nextValue })
+        .eq("user_id", user.id);
+
+      if (error) setAiInsightsEnabled(!nextValue);
+    }
   }
 
   return (
@@ -107,26 +193,6 @@ export default function Profile() {
           </View>
           <Text style={styles.heroName}>{fullName || "Loading..."}</Text>
           <Text style={styles.heroEmail}>{email || "Loading..."}</Text>
-          <View style={styles.activeBadge}>
-            <View style={styles.badgeDot} />
-            <Text style={styles.badgeText}>Active account</Text>
-          </View>
-        </View>
-
-        {/* ── Stats ── */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>3</Text>
-            <Text style={styles.statLabel}>Active goals</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>62%</Text>
-            <Text style={styles.statLabel}>Savings rate</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>Mar</Text>
-            <Text style={styles.statLabel}>Member since</Text>
-          </View>
         </View>
 
         {/* ── Account ── */}
@@ -138,15 +204,7 @@ export default function Profile() {
             iconColor="#8E6CFF"
             title="Personal information"
             subtitle="Name, email, phone"
-            onPress={() => console.log("Personal info")}
-          />
-          <MenuRow
-            icon="lock-closed-outline"
-            iconBg="#112B1D"
-            iconColor="#56D37F"
-            title="Security"
-            subtitle="Password, 2FA"
-            onPress={() => console.log("Security")}
+            onPress={openInfoModal}
             isLast
           />
         </View>
@@ -155,32 +213,14 @@ export default function Profile() {
         <Text style={styles.sectionLabel}>Preferences</Text>
         <View style={styles.menuGroup}>
           <MenuRow
-            icon="notifications-outline"
-            iconBg="#2A2210"
-            iconColor="#F4C542"
-            title="Notifications"
-            subtitle="Alerts and reminders"
-            badge="3"
-            badgeColor="#6C63FF"
-            onPress={() => console.log("Notifications")}
-          />
-          <MenuRow
-            icon="cash-outline"
-            iconBg="#112531"
-            iconColor="#5ED6FF"
-            title="Currency"
-            subtitle="USD — US Dollar"
-            onPress={() => console.log("Currency")}
-          />
-          <MenuRow
             icon="sparkles-outline"
             iconBg="#1C1A3A"
             iconColor="#8E6CFF"
             title="AI Insights"
-            subtitle="Monthly report enabled"
-            badge="On"
-            badgeColor="#56D37F"
-            onPress={() => console.log("AI Insights")}
+            subtitle={aiInsightsEnabled ? "Monthly report enabled" : "Monthly report disabled"}
+            badge={aiInsightsEnabled ? "On" : "Off"}
+            badgeColor={aiInsightsEnabled ? "#56D37F" : "#FF6B6B"}
+            onPress={toggleAiInsights}
             isLast
           />
         </View>
@@ -194,13 +234,6 @@ export default function Profile() {
             iconColor="#F4C542"
             title="Help & FAQ"
             onPress={() => console.log("Help")}
-          />
-          <MenuRow
-            icon="document-text-outline"
-            iconBg="#1B1C24"
-            iconColor="#8B8B98"
-            title="Privacy policy"
-            onPress={() => console.log("Privacy")}
             isLast
           />
         </View>
@@ -217,6 +250,66 @@ export default function Profile() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      <Modal
+        visible={infoModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInfoModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <Pressable
+            style={styles.modalBackdrop}
+            onPress={() => setInfoModalVisible(false)}
+          />
+          <View style={styles.bottomSheet}>
+            <View style={styles.sheetHandle} />
+            <Text style={styles.sheetTitle}>Personal Information</Text>
+
+            <Text style={styles.sheetLabel}>Name</Text>
+            <TextInput
+              style={styles.sheetInput}
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder="Full name"
+              placeholderTextColor="#6F707C"
+            />
+
+            <Text style={styles.sheetLabel}>Phone</Text>
+            <TextInput
+              style={styles.sheetInput}
+              value={phoneInput}
+              onChangeText={setPhoneInput}
+              placeholder="Phone number"
+              placeholderTextColor="#6F707C"
+              keyboardType="phone-pad"
+            />
+
+            <Text style={styles.readOnlyEmail}>Email: {email}</Text>
+
+            <View style={styles.sheetButtonRow}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setInfoModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitButton, savingInfo && { opacity: 0.65 }]}
+                onPress={savePersonalInfo}
+                disabled={savingInfo}
+              >
+                <Text style={styles.submitButtonText}>
+                  {savingInfo ? "Saving..." : "Save"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -397,56 +490,6 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.4)",
     fontSize: 13,
   },
-  activeBadge: {
-    alignItems: "center",
-    backgroundColor: "rgba(108,99,255,0.12)",
-    borderColor: "rgba(108,99,255,0.28)",
-    borderRadius: 20,
-    borderWidth: 0.5,
-    flexDirection: "row",
-    gap: 6,
-    marginTop: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-  },
-  badgeDot: {
-    backgroundColor: "#6C63FF",
-    borderRadius: 3,
-    height: 6,
-    width: 6,
-  },
-  badgeText: {
-    color: "rgba(108,99,255,0.9)",
-    fontSize: 11,
-    fontWeight: "500",
-  },
-
-  // Stats
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 24,
-  },
-  statBox: {
-    alignItems: "center",
-    backgroundColor: "#12131B",
-    borderColor: "#242633",
-    borderRadius: 16,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: 14,
-  },
-  statValue: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  statLabel: {
-    color: "rgba(255,255,255,0.35)",
-    fontSize: 10,
-  },
-
   // Section label
   sectionLabel: {
     color: "rgba(255,255,255,0.25)",
@@ -507,6 +550,89 @@ const styles = StyleSheet.create({
   menuBadgeText: {
     fontSize: 10,
     fontWeight: "600",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+  },
+  bottomSheet: {
+    backgroundColor: "#12131B",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 28,
+    borderTopWidth: 1,
+    borderColor: "#242633",
+  },
+  sheetHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 99,
+    backgroundColor: "#3A3D4A",
+    alignSelf: "center",
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 18,
+  },
+  sheetLabel: {
+    color: "#A5A5B2",
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  sheetInput: {
+    backgroundColor: "#0E1016",
+    borderWidth: 1,
+    borderColor: "#242633",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    color: "#FFFFFF",
+    fontSize: 15,
+    marginBottom: 16,
+  },
+  readOnlyEmail: {
+    color: "rgba(255,255,255,0.35)",
+    fontSize: 12,
+    marginBottom: 18,
+  },
+  sheetButtonRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#2A2D3A",
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "#0E1016",
+  },
+  cancelButtonText: {
+    color: "#A5A5B2",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  submitButton: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "#6C63FF",
+  },
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
   // Logout

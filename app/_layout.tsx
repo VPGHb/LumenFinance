@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 export default function RootLayout() {
   const [session, setSession] = useState<any>(undefined);
   const [isOnboarded, setIsOnboarded] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const router = useRouter();
   const segments = useSegments<any>();
 
@@ -31,6 +32,21 @@ export default function RootLayout() {
     async function checkOnboarding() {
       if (!session?.user) {
         setIsOnboarded(null);
+        setIsAdmin(null);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("UserInfo")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .single();
+
+      const adminUser = profile?.role === "admin";
+      setIsAdmin(adminUser);
+
+      if (adminUser) {
+        setIsOnboarded(true);
         return;
       }
 
@@ -58,21 +74,34 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (session === undefined) return;
-    if (session && isOnboarded === null) return;
+    if (session && (isOnboarded === null || isAdmin === null)) return;
 
     const inTabs = segments[0] === "(tabs)";
     const inProfile = segments[0] === "profile";
+    const inAdmin = segments[0] === "admin";
     const inLogin = segments[0] === "login";
     const inSignup = segments[0] === "signup";
     const inWelcome = segments[0] === "welcome";
 
-    const inProtectedRoute = inTabs || inProfile;
+    const inProtectedRoute = inTabs || inProfile || inAdmin;
     const inGuestRoute = inLogin || inSignup;
 
     if (!session) {
       if (inProtectedRoute || inWelcome || inLoading) {
         router.replace("/login");
       }
+      return;
+    }
+
+    if (isAdmin) {
+      if (!inAdmin && !inLoading) {
+        router.replace("/admin");
+      }
+      return;
+    }
+
+    if (inAdmin) {
+      router.replace("/(tabs)/home");
       return;
     }
 
@@ -86,9 +115,12 @@ export default function RootLayout() {
     if (inGuestRoute || inWelcome) {
       router.replace("/(tabs)/home");
     }
-  }, [session, isOnboarded, segments, router]);
+  }, [session, isOnboarded, isAdmin, segments, router, inLoading]);
 
-  if (session === undefined || (session && isOnboarded === null)) {
+  if (
+    session === undefined ||
+    (session && (isOnboarded === null || isAdmin === null))
+  ) {
     return (
       <View
         style={{
@@ -131,6 +163,12 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="loading"
+        options={{
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="admin"
         options={{
           gestureEnabled: false,
         }}

@@ -65,6 +65,19 @@ export default function Insights() {
         return;
       }
 
+      const { data: accountData } = await supabase
+        .from("accounts")
+        .select("ai_insights_enabled")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (accountData?.ai_insights_enabled === false) {
+        setMonthlySummary(null);
+        setInsight("AI insights are turned off in your profile.");
+        setLoading(false);
+        return;
+      }
+
       const now = new Date();
       const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
