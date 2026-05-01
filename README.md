@@ -1,4 +1,6 @@
-# Temp Read me Lumen Finance
+# Lumen Finance
+
+Collaborated with Vraj Patel & Kabir Marwaha
 
 ## Setup
 1. Clone the repo
